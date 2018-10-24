@@ -12,7 +12,25 @@ class City:
         return "(" + str(self.x) + " ---" + str(self.distance) + "--> " + str(self.y) + ")"
 
 
+def rank_based_selection(population, population_fitness):
+    sum = len(population) * (len(population) + 1) / 2
+    prob = [(i + 1) / sum for i in range(len(population))]
+    return random.choices(population, weights=prob, k=len(population))
+
+
+def steady_state_replacement(curr_generation, children, p_rep):
+    next_generation = deepcopy(curr_generation)
+    l = int(p_rep * len(next_generation))
+    next_generation[:l] = children[-l:]
+    return next_generation
+
+
 class Chromosome(list):
+    def __init__(self):
+        list.__init__(self)
+        self.distance = 0
+        self.fitness = 0
+
     def __getitem__(self, key):
         return list.__getitem__(self, key)
 
@@ -100,3 +118,19 @@ class Chromosome(list):
                     child[s1], child[s1 + mid - i] = child[s1 + mid - i] + child[i]
 
             return child
+
+        def fitness(self):
+            if self.distance == 0:
+                dist = 0
+                for i in range(0, len(self)):
+                    fromCity = self[i]
+                    toCity = None
+                    if i + 1 < len(self):
+                        toCity = self[i + 1]
+                    else:
+                        toCity = self[0]
+                    dist += fromCity.distance(toCity)
+                self.distance = dist
+                if self.fitness == 0:
+                    self.fitness = 1 / float(self.distance)
+            return self.fitness
