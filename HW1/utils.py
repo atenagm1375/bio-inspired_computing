@@ -1,0 +1,144 @@
+import random
+from copy import deepcopy
+import operator
+
+
+def initialize_population(cities, N):
+    population = []
+    for i in range(N):
+        population.append(random.sample(cities, len(cities)))
+    return population
+
+
+def compute_population_fitness(population, distances):
+    fitnesses = {}
+    for i in range(len(population)):
+        fitnesses[i] = compute_fitness(population[i], distances)
+    return sorted(fitnesses.items(), key=operator.itemgetter(1))
+
+
+def rank_based_selection(population):
+    sum = len(population) * (len(population) + 1) / 2
+    prob = [(i + 1) / sum for i in range(len(population))]
+    return random.choices(population.keys(), weights=prob, k=len(population))
+
+
+def steady_state_replacement(curr_generation, children, p_rep):
+    next_generation = deepcopy(curr_generation)
+    l = int(p_rep * len(next_generation))
+    next_generation[:l] = children[-l:]
+    return next_generation
+
+
+def compute_fitness(route, distances):
+    dist = 0
+    for i in range(1, len(route)):
+        dist += 0 if (i - 1, i) not in distances.keys() else distances[(i - 1, i)]
+    return 1 / float(dist) if dist != 0 else 0
+
+
+def crossover(pool, p_c, type="order"):
+    children = []
+    n = len(pool)
+    for i in range(n // 2):
+        child1 = pool[i]
+        child2 = pool[n - i - 1]
+        if random.uniform(0, 1) < p_c:
+            child1, child2 = recombine(child1, child2, type)
+        children.append(child1)
+        children.append(child2)
+    return children
+
+
+def order_recombine_aid(par, point1, point2, child):
+    i = point2 + 1
+    while i != point1:
+        if i >= len(par):
+            i = 0
+        j = i
+        while True:
+            if par[j] not in child:
+                child[i] = par[j]
+                break
+            else:
+                j += 1
+                if j >= len(par):
+                    j = 0
+    return child
+
+def recombine(par1, par2, type):
+    child1 = Chromosome([-1] * len(par1))
+    child2 = Chromosome([-1] * len(par2))
+
+    if type == "order":
+        point1 = random.randint(0, len(par1))
+        point2 = random.randint(0, len(par1))
+        if point2 < point1:
+            point1, point2 = point2, point1
+
+        child1[point1:point2] = par1[point1:point2]
+        child2[point1:point2] = par2[point1:point2]
+
+        child1 = order_recombine_aid(par2, point1, point2, child1)
+        child2 = order_recombine_aid(par1, point1, point2, child2)
+    elif type == "cycle":
+        cycles = []
+        for j in range(len(par1)):
+            i = j
+            if j > 0 and i in cycles[j - 1]:
+                continue
+            cycle = []
+            while True:
+                if i in cycle:
+                    break
+                cycle.append(i)
+                i = par1.index(par2[i])
+            if cycle:
+                cycles.append(cycle)
+
+        flag = True
+        for cycle in cycles:
+            if flag:
+                for i in cycle:
+                    child1[i] = par1[i]
+                flag = False
+            else:
+                for i in cycle:
+                    child2[i] = par2[i]
+                flag = True
+
+    return child1, child2
+
+
+def mutation(children, p_m, type="swap"):
+    for i in range(len(children)):
+        if random.uniform(0, 1) < p_m:
+            children[i] = mutate(children[i], type)
+    return children
+
+
+def mutate(child, type):
+    child = deepcopy(child)
+    s1 = random.randint(0, len(child))
+    s2 = random.randint(0, len(child))
+    if type == "swap":
+        child[s1], child[s2] = child[s2], child[s1]
+    elif type == "insert":
+        if s1 > s2:
+            s2, s1 = s1, s2
+        tmp = child[s2]
+        for i in range(s1 + 2, s2):
+            child[i] = child[i - 1]
+        child[s1 + 1] = tmp
+    elif type == "scramble":
+        if s1 > s2:
+            s2, s1 = s1, s2
+        child[s1:s2] = random.shuffle(child[s1:s2])
+    elif type == "inversion":
+        if s1 > s2:
+            s2, s1 = s1, s2
+        mid = (s2 - s1) // 2
+        for i in range(s1, s1 + mid):
+            child[s1], child[s1 + mid - i] = child[s1 + mid - i] + child[i]
+
+    return child
