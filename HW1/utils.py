@@ -81,8 +81,8 @@ def recombine(par1, par2, type):
     child2 = [-1] * len(par2)
 
     if type == "order":
-        point1 = random.randint(0, len(par1))
-        point2 = random.randint(0, len(par1))
+        point1 = random.randint(1, len(par1)) - 1
+        point2 = random.randint(1, len(par1)) - 1
         if point2 < point1:
             point1, point2 = point2, point1
 
@@ -131,8 +131,8 @@ def mutation(children, p_m, type="swap"):
 
 def mutate(child, type):
     child = deepcopy(child)
-    s1 = random.randint(0, len(child))
-    s2 = random.randint(0, len(child))
+    s1 = random.randint(1, len(child)) - 1
+    s2 = random.randint(1, len(child)) - 1
     if type == "swap":
         child[s1], child[s2] = child[s2], child[s1]
     elif type == "insert":
