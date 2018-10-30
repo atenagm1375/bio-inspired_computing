@@ -1,6 +1,7 @@
 import random
 from copy import deepcopy
 import operator
+from itertools import chain
 
 
 def initialize_population(cities, N):
@@ -102,7 +103,7 @@ def recombine(par1, par2, type):
         cycles = []
         for j in range(len(par1)):
             i = j
-            if j > 0 and i in cycles[j - 1]:
+            if i in chain.from_iterable(cycles):
                 continue
             cycle = []
             while True:
