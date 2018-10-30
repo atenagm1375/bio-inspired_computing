@@ -156,8 +156,11 @@ def mutate(child, type):
     elif type == "inversion":
         if s1 > s2:
             s2, s1 = s1, s2
-        mid = (s2 - s1) // 2
-        for i in range(s1, s1 + mid):
-            child[s1], child[s1 + mid - i] = child[s1 + mid - i] + child[i]
+        mid = (s2 - s1) // 2 + s1
+        print(s1, s2, mid)
+        print(child)
+        for i in range(s1, mid):
+            child[i], child[s2 - i + s1] = child[s2 - i + s1], child[i]
+        print(child)
 
     return child

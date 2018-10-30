@@ -31,7 +31,7 @@ while True:
     print("best distance of generation:", 1 / fittest[1])
     mating_pool = rank_based_selection(dict(population_fitness))
     children = crossover(population, mating_pool, p_c, "order")
-    children = mutation(children, p_m, "scramble")
+    children = mutation(children, p_m, "inversion")
     children_fitness = compute_population_fitness(children, distances)
     population = steady_state_replacement(population, population_fitness, \
                                             children,children_fitness, p_rep)
