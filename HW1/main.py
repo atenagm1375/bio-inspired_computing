@@ -1,4 +1,4 @@
-from read_data import read_data_2
+from read_data import read_data_2, read_data_1
 from utils import initialize_population, compute_population_fitness, crossover, \
                     rank_based_selection, mutation, steady_state_replacement
 
@@ -12,7 +12,7 @@ population_num = 100
 iteration_num = 1
 
 # genetic algorithm process
-cities, distances, num_routes = read_data_2()
+cities, distances, num_routes = read_data_1()
 population = initialize_population(cities, population_num)
 # population_fitness = compute_population_fitness(population, distances)
 # fittest = population_fitness[-1]
