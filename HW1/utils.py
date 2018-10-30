@@ -150,7 +150,9 @@ def mutate(child, type):
     elif type == "scramble":
         if s1 > s2:
             s2, s1 = s1, s2
-        child[s1:s2] = random.shuffle(child[s1:s2])
+        copy = child[s1:s2]
+        random.shuffle(copy)
+        child[s1:s2] = copy
     elif type == "inversion":
         if s1 > s2:
             s2, s1 = s1, s2
