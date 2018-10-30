@@ -17,32 +17,38 @@ def compute_population_fitness(population, distances):
     return sorted(fitnesses.items(), key=operator.itemgetter(1))
 
 
-def rank_based_selection(population):
-    sum = len(population) * (len(population) + 1) / 2
-    prob = [(i + 1) / sum for i in range(len(population))]
-    return random.choices(population.keys(), weights=prob, k=len(population))
-
-
-def steady_state_replacement(curr_generation, children, p_rep):
-    next_generation = deepcopy(curr_generation)
-    l = int(p_rep * len(next_generation))
-    next_generation[:l] = children[-l:]
-    return next_generation
-
-
 def compute_fitness(route, distances):
     dist = 0
     for i in range(1, len(route)):
-        dist += 0 if (i - 1, i) not in distances.keys() else distances[(i - 1, i)]
+        dist += 0 if (route[i - 1], route[i]) not in distances.keys() \
+                    else distances[(route[i - 1], route[i])]
     return 1 / float(dist) if dist != 0 else 0
 
 
-def crossover(pool, p_c, type="order"):
+def rank_based_selection(population):
+    sum = len(population) * (len(population) + 1) / 2
+    prob = [(i + 1) / sum for i in range(len(population))]
+    return random.choices(list(population.keys()), weights=prob, k=len(population))
+
+
+def steady_state_replacement(curr_generation, pop_fit, children, chld_fit, p_rep):
+    next_generation = [curr_generation[pop[0]] for pop in pop_fit]
+    l = int(p_rep * len(next_generation))
+    chld = chld_fit[-l:]
+    next_generation[:l] = [children[pop[0]] for pop in chld]
+    return next_generation
+    # next_generation = deepcopy(curr_generation)
+    # l = int(p_rep * len(next_generation))
+    # next_generation[:l] = children[-l:]
+    # return next_generation
+
+
+def crossover(population, pool, p_c, type="order"):
     children = []
     n = len(pool)
     for i in range(n // 2):
-        child1 = pool[i]
-        child2 = pool[n - i - 1]
+        child1 = population[pool[i]]
+        child2 = population[pool[n - i - 1]]
         if random.uniform(0, 1) < p_c:
             child1, child2 = recombine(child1, child2, type)
         children.append(child1)
@@ -51,10 +57,13 @@ def crossover(pool, p_c, type="order"):
 
 
 def order_recombine_aid(par, point1, point2, child):
-    i = point2 + 1
+    i = point2
     while i != point1:
         if i >= len(par):
-            i = 0
+            if point1 != 0:
+                i = 0
+            else:
+                break
         j = i
         while True:
             if par[j] not in child:
@@ -64,11 +73,12 @@ def order_recombine_aid(par, point1, point2, child):
                 j += 1
                 if j >= len(par):
                     j = 0
+        i += 1
     return child
 
 def recombine(par1, par2, type):
-    child1 = Chromosome([-1] * len(par1))
-    child2 = Chromosome([-1] * len(par2))
+    child1 = [-1] * len(par1)
+    child2 = [-1] * len(par2)
 
     if type == "order":
         point1 = random.randint(0, len(par1))
@@ -79,6 +89,8 @@ def recombine(par1, par2, type):
         child1[point1:point2] = par1[point1:point2]
         child2[point1:point2] = par2[point1:point2]
 
+        # print(point1, point2)
+        # print(par1, par2)
         child1 = order_recombine_aid(par2, point1, point2, child1)
         child2 = order_recombine_aid(par1, point1, point2, child2)
     elif type == "cycle":
