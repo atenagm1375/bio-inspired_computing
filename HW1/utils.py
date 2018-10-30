@@ -27,7 +27,7 @@ def compute_fitness(route, distances):
         elif (route[i], route[i - 1]) in distances.keys():
             dist += distances[(route[i], route[i - 1])]
         else:
-            dist += max(list(distances.values()))
+            dist += (2 * max(list(distances.values())))
     return 1 / float(dist) if dist != 0 else 0
 
 
@@ -119,10 +119,12 @@ def recombine(par1, par2, type):
             if flag:
                 for i in cycle:
                     child1[i] = par1[i]
+                    child2[i] = par2[i]
                 flag = False
             else:
                 for i in cycle:
-                    child2[i] = par2[i]
+                    child2[i] = par1[i]
+                    child1[i] = par2[i]
                 flag = True
 
     return child1, child2
