@@ -21,8 +21,12 @@ def compute_fitness(route, distances):
     dist = 0
 
     for i in range(1, len(route)):
-        dist += max(list(distances.values())) if (route[i - 1], route[i]) \
-        not in distances.keys() else distances[(route[i - 1], route[i])]
+        if (route[i - 1], route[i]) in distances.keys():
+            dist += distances[(route[i - 1], route[i])]
+        elif (route[i], route[i - 1]) in distances.keys():
+            dist += distances[(route[i], route[i - 1])]
+        else:
+            dist += max(list(distances.values()))
     return 1 / float(dist) if dist != 0 else 0
 
 
@@ -157,10 +161,10 @@ def mutate(child, type):
         if s1 > s2:
             s2, s1 = s1, s2
         mid = (s2 - s1) // 2 + s1
-        print(s1, s2, mid)
-        print(child)
+        # print(s1, s2, mid)
+        # print(child)
         for i in range(s1, mid):
             child[i], child[s2 - i + s1] = child[s2 - i + s1], child[i]
-        print(child)
+        # print(child)
 
     return child
