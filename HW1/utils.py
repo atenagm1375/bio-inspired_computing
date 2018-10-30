@@ -19,9 +19,10 @@ def compute_population_fitness(population, distances):
 
 def compute_fitness(route, distances):
     dist = 0
+
     for i in range(1, len(route)):
-        dist += 0 if (route[i - 1], route[i]) not in distances.keys() \
-                    else distances[(route[i - 1], route[i])]
+        dist += max(list(distances.values())) if (route[i - 1], route[i]) \
+        not in distances.keys() else distances[(route[i - 1], route[i])]
     return 1 / float(dist) if dist != 0 else 0
 
 
@@ -81,7 +82,7 @@ def recombine(par1, par2, type):
     child2 = [-1] * len(par2)
 
     if type == "order":
-        point1 = random.randint(1, len(par1)) - 1
+        point1 = random.randint(2, len(par1)) - 2
         point2 = random.randint(1, len(par1)) - 1
         if point2 < point1:
             point1, point2 = point2, point1
@@ -131,17 +132,21 @@ def mutation(children, p_m, type="swap"):
 
 def mutate(child, type):
     child = deepcopy(child)
-    s1 = random.randint(1, len(child)) - 1
+    s1 = random.randint(2, len(child)) - 2
     s2 = random.randint(1, len(child)) - 1
+    while s1 == s2:
+        s2 = random.randint(1, len(child)) - 1
     if type == "swap":
         child[s1], child[s2] = child[s2], child[s1]
     elif type == "insert":
         if s1 > s2:
             s2, s1 = s1, s2
+        # print(s1, s2)
         tmp = child[s2]
-        for i in range(s1 + 2, s2):
+        for i in range(s2, s1 + 1, -1):
             child[i] = child[i - 1]
         child[s1 + 1] = tmp
+        # print("child:", child)
     elif type == "scramble":
         if s1 > s2:
             s2, s1 = s1, s2

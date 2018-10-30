@@ -28,10 +28,10 @@ while True:
         cnt = 0
     fittest = population_fitness[-1]
     print("iteration number", iteration_num, ":")
-    print("best fitness generation:", fittest[1])
+    print("best distance of generation:", 1 / fittest[1])
     mating_pool = rank_based_selection(dict(population_fitness))
     children = crossover(population, mating_pool, p_c, "order")
-    children = mutation(children, p_m, "swap")
+    children = mutation(children, p_m, "insert")
     children_fitness = compute_population_fitness(children, distances)
     population = steady_state_replacement(population, population_fitness, \
                                             children,children_fitness, p_rep)
@@ -40,5 +40,5 @@ while True:
     iteration_num += 1
 
 print("******************************************")
-print("best fitness found:", fittest[1])
+print("best distance found:", 1 / fittest[1])
 print("best route found:", population[fittest[0]])
