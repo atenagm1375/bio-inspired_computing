@@ -6,6 +6,7 @@ w = 0.5
 c1 = 1
 c2 = 2
 N = 50
-max_iter = 100
+max_iter = 1000
+stagnancy = 100
 
-PSO(func1, bounds[0], w, c1, c2, N, max_iter)
+PSO(func1, bounds[0], w, c1, c2, N, max_iter, stagnancy)
