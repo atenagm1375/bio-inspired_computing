@@ -1,4 +1,5 @@
 from functions import func1, func2, bounds
+from pso import PSO
 
 # initializtion
 w = 0.5
