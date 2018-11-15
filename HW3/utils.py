@@ -19,21 +19,10 @@ def compute_population_fitness(population, distances):
 
 
 def compute_fitness(route, distances):
-    dist = 0
-    if (route[len(route) - 1], route[0]) in distances.keys():
-        dist += distances[(route[len(route) - 1], route[0])]
-    elif (route[0], route[len(route) - 1]) in distances.keys():
-        dist += distances[(route[0], route[len(route) - 1])]
-    else:
-        dist += (2 * max(list(distances.values())))
+    dist = distances[route[0]][route[len(route) - 1]]
 
     for i in range(1, len(route)):
-        if (route[i - 1], route[i]) in distances.keys():
-            dist += distances[(route[i - 1], route[i])]
-        elif (route[i], route[i - 1]) in distances.keys():
-            dist += distances[(route[i], route[i - 1])]
-        else:
-            dist += (2 * max(list(distances.values())))
+        dist += distances[route[i]][route[i - 1]]
     return 1 / float(dist) if dist != 0 else 0
 
 
@@ -177,3 +166,36 @@ def mutate(child, type):
         # print(child)
 
     return child
+
+
+def local_search(population, pop_fit, distances, p_local=0.5, neighbor_num=5, lamarck=True):
+    for ind in pop_fit:
+        if random.uniform(0, 1) < p_local:
+            N_i, cost = two_opt(population[ind[0]], ind[1], distances, neighbor_num)
+            if lamarck:
+                population[ind[0]] = N_i
+                pop_fit[pop_fit.index(ind)] = (ind[0], cost)
+            else:
+                pop_fit[pop_fit.index(ind)] = (ind[0], cost)
+    return population, pop_fit
+
+
+def two_opt(individual, cost, distances, neighbor_num):
+    best_cost = cost
+    best_neighbor = individual
+    edges = []
+    for i in range(neighbor_num):
+        x = random.sample(list(range(len(individual))), 2)
+        while x in edges:
+            x = random.sample(list(range(len(individual))), 2)
+        if x[0] > x[1]:
+            x = x[::-1]
+        edges.append(x)
+    for pair in edges:
+        cop = deepcopy(individual)
+        cop[pair[0]+1:pair[1]] = cop[pair[1]-1:pair[0]:-1]
+        cost = compute_fitness(cop, distances)
+        if cost < best_cost:
+            best_cost = cost
+            best_neighbor = cop
+    return best_neighbor, best_cost
