@@ -9,16 +9,16 @@ def acceptance_probability(current_energy, new_energy, temperature):
     return exp((current_energy - new_energy) / temperature)
 
 
-def generate_initial_solution(N):
-    lst = list(range(N))
-    return random.shuffle(lst)
+def generate_initial_solution(cities):
+    random.shuffle(cities)
+    return cities
 
 
 def get_distance(tour, distances):
     N = len(tour)
     dist = distances[tour[N - 1]][tour[0]]
     for i in range(1, N):
-        dist += tour[i - 1][i]
+        dist += distances[tour[i - 1]][tour[i]]
     return dist
 
 
