@@ -3,8 +3,8 @@ from utils import *
 
 
 # parametes
-temperature = 50000
-cooling_rate = 0.0005
+temperature = 10000
+cooling_rate = 0.000003
 
 cities, distances = read_data()
 tour = generate_initial_solution(cities)
