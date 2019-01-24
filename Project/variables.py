@@ -6,3 +6,6 @@ n_hidden_dim = 5
 
 lr = 0.01
 reg_lambda = 0.01
+
+activation_function1 = "tanh"
+activation_function2 = "softmax"
