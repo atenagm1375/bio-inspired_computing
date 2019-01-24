@@ -65,8 +65,8 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, batch_gd=Fals
 
     for i in range(num_passes):
         # forward propagation
-        a1 = activation(X, W1, b1, activation_function1)
-        a2 = activation(a1, W2, b2, activation_function2)
+        a1 = forward_propagation(X, W1, b1, activation_function1)
+        a2 = forward_propagation(a1, W2, b2, activation_function2)
 
         # backpropagation
         # TODO: put it in a separate function
