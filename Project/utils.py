@@ -8,9 +8,12 @@ def generate_dataset(n_classes=2):
     if n_classes == 2:
         np.random.seed(0)
         X, y = make_moons(n_examples, noise=0.2)
-        plt.scatter(X[:, 0], X[:, 1], s=40, c=y, cmap=plt.cm.Spectral)
-        plt.show()
     return X, y
+
+
+def plot_dataset(X, y):
+    plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap=plt.cm.Spectral)
+    plt.show()
 
 
 def activation(func, z):
@@ -43,12 +46,12 @@ def calculate_loss(model, X, y):
 def predict(model, X):
     W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
 
-        # forward propagation to hidden layer
-        a1 = forward_propagation(X, W1, b1, activation_function1)
-        # foward propagation to output layer
-        a2 = forward_propagation(a1, W2, b2, activation_function2)
+    # forward propagation to hidden layer
+    a1 = forward_propagation(X, W1, b1, activation_function1)
+    # foward propagation to output layer
+    a2 = forward_propagation(a1, W2, b2, activation_function2)
 
-        return np.argmax(a2, axis=1)
+    return np.argmax(a2, axis=1)
 
 
 def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, batch_gd=False):
@@ -60,7 +63,7 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, batch_gd=Fals
 
     model = {}
 
-    for i in xrange(0, num_passes):
+    for i in range(num_passes):
         # forward propagation
         a1 = activation(X, W1, b1, activation_function1)
         a2 = activation(a1, W2, b2, activation_function2)
@@ -91,3 +94,12 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, batch_gd=Fals
             print("Loss after iteration {}: {}".format(i, calculate_loss(model, X, y)))
 
     return model
+
+
+def plot_decision_boundary(model, X, y):
+    Z = predict(model, X)
+    plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap=plt.cm.Spectral)
+    ax = plt.gca()
+    ax.autoscale(False)
+    plt.plot(X, Z)
+    plt.show()

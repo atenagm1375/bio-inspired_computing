@@ -2,4 +2,5 @@ from utils import *
 
 
 X, y = generate_dataset(n_classes=n_classes)
-print(len(X), len(y))
+plot_dataset(X, y)
+print(X)
