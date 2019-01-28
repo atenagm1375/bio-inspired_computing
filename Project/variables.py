@@ -2,12 +2,12 @@ n_classes = 2
 n_examples = 200
 n_input_dim = 2
 n_output_dim = 2
-n_hidden_dim = 3
+n_hidden_dim = 40
 n_hidden_layers = 1
 n_hidden_dim2 = 0
 n_passes = 20000
 print_loss_value = True
-minibatch_size = n_examples
+minibatch_size = 100
 
 lr = 0.01
 reg_lambda = 0.01

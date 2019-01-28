@@ -54,7 +54,7 @@ def predict(model, X):
     return np.argmax(a2, axis=1)
 
 
-def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, batch_gd=False):
+def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, minibatch_size=minibatch_size):
     np.random.seed(0)
     W1 = np.random.randn(n_input_dim, nn_hdim) / np.sqrt(n_input_dim)
     b1 = np.zeros((1, nn_hdim))
@@ -64,31 +64,34 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, batch_gd=Fals
     model = {}
 
     for i in range(num_passes):
-        # forward propagation
-        a1 = forward_propagation(X, W1, b1, activation_function1)
-        a2 = forward_propagation(a1, W2, b2, activation_function2)
+        for j in range(0, X.shape[0], minibatch_size):
+            X_train = X[j:j + minibatch_size]
+            y_train = y[j:j + minibatch_size]
+            # forward propagation
+            a1 = forward_propagation(X_train, W1, b1, activation_function1)
+            a2 = forward_propagation(a1, W2, b2, activation_function2)
 
-        # backpropagation
-        # TODO: put it in a separate function
-        delta3 = a2
-        delta3[range(n_examples), y] -= 1
-        dW2 = (a1.T).dot(delta3)
-        db2 = np.sum(delta3, axis=0, keepdims=True)
-        delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
-        dW1 = np.dot(X.T, delta2)
-        db1 = np.sum(delta2, axis=0)
+            # backpropagation
+            # TODO: put it in a separate function
+            delta3 = a2
+            delta3[range(minibatch_size), y_train] -= 1
+            dW2 = (a1.T).dot(delta3)
+            db2 = np.sum(delta3, axis=0, keepdims=True)
+            delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
+            dW1 = np.dot(X_train.T, delta2)
+            db1 = np.sum(delta2, axis=0)
 
-        # add regularization terms
-        dW2 += reg_lambda * W2
-        dW1 += reg_lambda * W1
+            # add regularization terms
+            dW2 += reg_lambda * W2
+            dW1 += reg_lambda * W1
 
-        # update parameters
-        W1 += -lr * dW1
-        b1 += -lr * db1
-        W2 += -lr * dW2
-        b2 += -lr * db2
+            # update parameters
+            W1 += -lr * dW1
+            b1 += -lr * db1
+            W2 += -lr * dW2
+            b2 += -lr * db2
 
-        model = {"W1": W1, "b1": b1, "W2": W2, "b2":b2}
+            model = {"W1": W1, "b1": b1, "W2": W2, "b2":b2}
 
         if print_loss and i % 1000 == 0:
             print("Loss after iteration {}: {}".format(i, calculate_loss(model, X, y)))
