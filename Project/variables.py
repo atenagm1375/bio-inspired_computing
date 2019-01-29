@@ -13,6 +13,6 @@ reg_lambda = 0.01
 lr_annealing = True
 decay_rate = epsilon / n_passes
 
-activation_function = ["tanh", "softmax"]
+activation_function = ["leaky ReLU", "softmax"]
 
 PLOT = "./plots/"

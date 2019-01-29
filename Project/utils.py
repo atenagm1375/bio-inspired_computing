@@ -26,25 +26,49 @@ class NeuralNetwork:
 
 
     def activation(self, func, z):
-        if func == "tanh":
-            return np.tanh(z)
-        elif func == "softmax":
+        if func == "softmax":
             exp_score = np.exp(z)
             return exp_score / np.sum(exp_score, axis=1, keepdims=True)
+        elif func == "tanh":
+            return np.tanh(z)
+        elif func == "sigmoid":
+            return 1. / (1 + np.exp(-z))
+        elif func == "ReLU":
+            return np.maximum(z, np.zeros(z.shape))
+        elif func == "leaky ReLU":
+            return np.maximum(z, 0.1 * z)
+
+
+    def activation_grad(self, func, z):
+        if func == "softmax":
+            pass
+        elif func == "tanh":
+            return 1 - np.square(np.tanh(z))
+        elif func == "sigmoid":
+            s = 1. / (1 + np.exp(-z))
+            return s * (1 - s)
+        elif func == "ReLU":
+            z[z <= 0] = 0
+            z[z > 0] = 1
+            return z
+        elif func == "leaky ReLU":
+            z[z <= 0] = 0.01
+            z[z > 0] = 1
+            return z
 
 
     def forward_propagation(self, X, W, b, func):
         z = X.dot(W) + b
-        return self.activation(func, z)
+        return z, self.activation(func, z)
 
 
     def calculate_loss(self, model, reg_lambda):
         W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
 
         # forward propagation to hidden layer
-        a1 = self.forward_propagation(self.X, W1, b1, self.activation_functions[0])
+        z1, a1 = self.forward_propagation(self.X, W1, b1, self.activation_functions[0])
         # foward propagation to output layer
-        a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+        z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
 
         logprobs = -np.log(a2[range(self.n_examples), self.y])
         data_loss = np.sum(logprobs)
@@ -56,9 +80,9 @@ class NeuralNetwork:
         W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
 
         # forward propagation to hidden layer
-        a1 = self.forward_propagation(x, W1, b1, self.activation_functions[0])
+        z1, a1 = self.forward_propagation(x, W1, b1, self.activation_functions[0])
         # foward propagation to output layer
-        a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+        z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
 
         return np.argmax(a2, axis=1)
 
@@ -79,18 +103,26 @@ class NeuralNetwork:
                 X_train = self.X[j:j + minibatch_size]
                 y_train = self.y[j:j + minibatch_size]
                 # forward propagation
-                a1 = self.forward_propagation(X_train, W1, b1, self.activation_functions[0])
-                a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+                z1, a1 = self.forward_propagation(X_train, W1, b1, self.activation_functions[0])
+                z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
 
                 # backpropagation
                 # TODO: put it in a separate function
+                # delta3 = (y_train - a2) * activation_grad(self.activation_functions[1], z2)
                 delta3 = a2
                 delta3[range(minibatch_size), y_train] -= 1
                 dW2 = (a1.T).dot(delta3)
                 db2 = np.sum(delta3, axis=0, keepdims=True)
-                delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
-                dW1 = np.dot(X_train.T, delta2)
+                delta2 = delta3.dot(W2.T) * self.activation_grad(self.activation_functions[0], z1)
+                dW1 = X_train.T.dot(delta2)
                 db1 = np.sum(delta2, axis=0)
+                # delta3 = a2
+                # delta3[range(minibatch_size), y_train] -= 1
+                # dW2 = (a1.T).dot(delta3)
+                # db2 = np.sum(delta3, axis=0, keepdims=True)
+                # delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
+                # dW1 = np.dot(X_train.T, delta2)
+                # db1 = np.sum(delta2, axis=0)
 
                 # add regularization terms
                 dW2 += reg_lambda * W2
@@ -129,4 +161,5 @@ class NeuralNetwork:
         # Plot the contour and training examples
         plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral)
         plt.scatter(self.X[:, 0], self.X[:, 1], c=self.y, cmap=plt.cm.Spectral)
+        # plt.show()
         plt.savefig(plot_name)
