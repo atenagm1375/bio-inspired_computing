@@ -1,27 +1,31 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import make_moons
+from sklearn.datasets import make_moons, make_classification
 
 
-def generate_dataset(n_classes=2, n_examples=200):
+def generate_dataset(n_classes=2, n_examples=200, n_features=2):
     if n_classes == 2:
         np.random.seed(0)
         X, y = make_moons(n_examples, noise=0.2)
+    else:
+        np.random.seed(0)
+        X, y = make_classification(n_samples=n_examples, n_features=n_features, \
+                                    n_repeated=0, n_redundant=0, n_clusters_per_class=1, n_classes=n_classes)
     return X, y
 
 
-def plot_dataset(X, y):
+def plot_dataset(X, y, n_classes):
     plt.scatter(X[:, 0], X[:, 1], s=20, c=y, cmap=plt.cm.Spectral)
     plt.show()
 
 
 class NeuralNetwork:
-    def __init__(self, func, X, y, n_examples, n_classes):
+    def __init__(self, func, X, y, n_examples, n_input_dim, n_classes):
         self.activation_functions = func
         self.X = X
         self.y = y
         self.n_examples = n_examples
-        self.n_input_dim = n_classes
+        self.n_input_dim = n_input_dim
         self.n_output_dim = n_classes
 
 
@@ -116,13 +120,6 @@ class NeuralNetwork:
                 delta2 = delta3.dot(W2.T) * self.activation_grad(self.activation_functions[0], z1)
                 dW1 = X_train.T.dot(delta2)
                 db1 = np.sum(delta2, axis=0)
-                # delta3 = a2
-                # delta3[range(minibatch_size), y_train] -= 1
-                # dW2 = (a1.T).dot(delta3)
-                # db2 = np.sum(delta3, axis=0, keepdims=True)
-                # delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
-                # dW1 = np.dot(X_train.T, delta2)
-                # db1 = np.sum(delta2, axis=0)
 
                 # add regularization terms
                 dW2 += reg_lambda * W2

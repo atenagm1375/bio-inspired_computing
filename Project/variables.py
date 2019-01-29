@@ -1,6 +1,6 @@
-n_classes = 2
+n_classes = 3
 n_examples = 200
-n_input_dim = n_classes
+n_input_dim = 2
 n_output_dim = n_classes
 n_hidden_dim = [1, 2, 3, 4, 5, 20, 40]
 n_hidden_layers = 1
@@ -15,4 +15,4 @@ decay_rate = epsilon / n_passes
 
 activation_function = ["leaky ReLU", "softmax"]
 
-PLOT = "./plots/"
+PLOT = "./plots/1 hidden layer, 3classes/"

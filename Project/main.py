@@ -3,11 +3,11 @@ from variables import *
 
 
 X, y = generate_dataset(n_classes=n_classes, n_examples=n_examples)
-# plot_dataset(X, y)
+# plot_dataset(X, y, n_classes)
 for hdim in n_hidden_dim:
-    nn_structure = (n_classes, hdim, n_classes)
+    nn_structure = (n_input_dim, hdim, n_classes)
     for mb_size in minibatch_size:
-        nn = NeuralNetwork(activation_function, X, y, n_examples, n_classes)
+        nn = NeuralNetwork(activation_function, X, y, n_examples, n_input_dim, n_classes)
         model = nn.build_model(nn_hdim=hdim, num_passes=n_passes, lr=epsilon, \
                                 print_loss=print_loss_value, minibatch_size=mb_size, \
                                 reduce_lr=lr_annealing, decay=decay_rate, reg_lambda=reg_lambda)
