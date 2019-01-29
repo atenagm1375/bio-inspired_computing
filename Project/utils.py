@@ -1,10 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_moons
-from variables import *
 
 
-def generate_dataset(n_classes=2):
+def generate_dataset(n_classes=2, n_examples=200):
     if n_classes == 2:
         np.random.seed(0)
         X, y = make_moons(n_examples, noise=0.2)
@@ -16,106 +15,118 @@ def plot_dataset(X, y):
     plt.show()
 
 
-def activation(func, z):
-    if func == "tanh":
-        return np.tanh(z)
-    elif func == "softmax":
-        exp_score = np.exp(z)
-        return exp_score / np.sum(exp_score, axis=1, keepdims=True)
+class NeuralNetwork:
+    def __init__(self, func, X, y, n_examples, n_classes):
+        self.activation_functions = func
+        self.X = X
+        self.y = y
+        self.n_examples = n_examples
+        self.n_input_dim = n_classes
+        self.n_output_dim = n_classes
 
 
-def forward_propagation(X, W, b, func):
-    z = X.dot(W) + b
-    return activation(func, z)
+    def activation(self, func, z):
+        if func == "tanh":
+            return np.tanh(z)
+        elif func == "softmax":
+            exp_score = np.exp(z)
+            return exp_score / np.sum(exp_score, axis=1, keepdims=True)
 
 
-def calculate_loss(model, X, y):
-    W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
-
-    # forward propagation to hidden layer
-    a1 = forward_propagation(X, W1, b1, activation_function1)
-    # foward propagation to output layer
-    a2 = forward_propagation(a1, W2, b2, activation_function2)
-
-    logprobs = -np.log(a2[range(n_examples), y])
-    data_loss = np.sum(logprobs)
-    data_loss += reg_lambda / 2 * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
-    return 1. / n_examples * data_loss
+    def forward_propagation(self, X, W, b, func):
+        z = X.dot(W) + b
+        return self.activation(func, z)
 
 
-def predict(model, X):
-    W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
+    def calculate_loss(self, model, reg_lambda):
+        W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
 
-    # forward propagation to hidden layer
-    a1 = forward_propagation(X, W1, b1, activation_function1)
-    # foward propagation to output layer
-    a2 = forward_propagation(a1, W2, b2, activation_function2)
+        # forward propagation to hidden layer
+        a1 = self.forward_propagation(self.X, W1, b1, self.activation_functions[0])
+        # foward propagation to output layer
+        a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
 
-    return np.argmax(a2, axis=1)
-
-
-def build_model(X, y, nn_hdim, num_passes=20000, lr=epsilon, print_loss=False, minibatch_size=minibatch_size, reduce_lr=False):
-    np.random.seed(0)
-    W1 = np.random.randn(n_input_dim, nn_hdim) / np.sqrt(n_input_dim)
-    b1 = np.zeros((1, nn_hdim))
-    W2 = np.random.randn(nn_hdim, n_output_dim) / np.sqrt(nn_hdim)
-    b2 = np.zeros((1, n_output_dim))
-
-    model = {}
-
-    for i in range(num_passes):
-        for j in range(0, X.shape[0], minibatch_size):
-            X_train = X[j:j + minibatch_size]
-            y_train = y[j:j + minibatch_size]
-            # forward propagation
-            a1 = forward_propagation(X_train, W1, b1, activation_function1)
-            a2 = forward_propagation(a1, W2, b2, activation_function2)
-
-            # backpropagation
-            # TODO: put it in a separate function
-            delta3 = a2
-            delta3[range(minibatch_size), y_train] -= 1
-            dW2 = (a1.T).dot(delta3)
-            db2 = np.sum(delta3, axis=0, keepdims=True)
-            delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
-            dW1 = np.dot(X_train.T, delta2)
-            db1 = np.sum(delta2, axis=0)
-
-            # add regularization terms
-            dW2 += reg_lambda * W2
-            dW1 += reg_lambda * W1
-
-            # update parameters
-            W1 += -lr * dW1
-            b1 += -lr * db1
-            W2 += -lr * dW2
-            b2 += -lr * db2
-
-            # update learning rate
-            if reduce_lr:
-                lr *= 1 / (1 + decay * i)
-
-            model = {"W1": W1, "b1": b1, "W2": W2, "b2":b2}
-
-        if print_loss and i % 1000 == 0:
-            print("Loss after iteration {}: {}".format(i, calculate_loss(model, X, y)))
-
-    return model
+        logprobs = -np.log(a2[range(self.n_examples), self.y])
+        data_loss = np.sum(logprobs)
+        data_loss += reg_lambda / 2 * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
+        return 1. / self.n_examples * data_loss
 
 
-def plot_decision_boundary(model, X, y):
-    # Set min and max values and give it some padding
-    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
-    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
-    h = 0.01
-    # Generate a grid of points with distance h between them
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    def predict(self, model, x):
+        W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
 
-    # Predict the function value for the whole grid
-    Z = predict(model, np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.reshape(xx.shape)
+        # forward propagation to hidden layer
+        a1 = self.forward_propagation(x, W1, b1, self.activation_functions[0])
+        # foward propagation to output layer
+        a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
 
-    # Plot the contour and training examples
-    plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral)
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Spectral)
-    plt.savefig(PLOT + plot_name)
+        return np.argmax(a2, axis=1)
+
+
+    def build_model(self, nn_hdim, num_passes=20000, lr=0.01, print_loss=False, \
+                    minibatch_size=200, reduce_lr=False, decay=0.01, \
+                    reg_lambda=0.01):
+        np.random.seed(0)
+        W1 = np.random.randn(self.n_input_dim, nn_hdim) / np.sqrt(self.n_input_dim)
+        b1 = np.zeros((1, nn_hdim))
+        W2 = np.random.randn(nn_hdim, self.n_output_dim) / np.sqrt(nn_hdim)
+        b2 = np.zeros((1, self.n_output_dim))
+
+        model = {}
+
+        for i in range(num_passes):
+            for j in range(0, self.X.shape[0], minibatch_size):
+                X_train = self.X[j:j + minibatch_size]
+                y_train = self.y[j:j + minibatch_size]
+                # forward propagation
+                a1 = self.forward_propagation(X_train, W1, b1, self.activation_functions[0])
+                a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+
+                # backpropagation
+                # TODO: put it in a separate function
+                delta3 = a2
+                delta3[range(minibatch_size), y_train] -= 1
+                dW2 = (a1.T).dot(delta3)
+                db2 = np.sum(delta3, axis=0, keepdims=True)
+                delta2 = delta3.dot(W2.T) * (1 - np.power(a1, 2))
+                dW1 = np.dot(X_train.T, delta2)
+                db1 = np.sum(delta2, axis=0)
+
+                # add regularization terms
+                dW2 += reg_lambda * W2
+                dW1 += reg_lambda * W1
+
+                # update parameters
+                W1 += -lr * dW1
+                b1 += -lr * db1
+                W2 += -lr * dW2
+                b2 += -lr * db2
+
+                # update learning rate
+                if reduce_lr:
+                    lr *= 1 / (1 + decay * i)
+
+                model = {"W1": W1, "b1": b1, "W2": W2, "b2":b2}
+
+            if print_loss and i % 1000 == 0:
+                print("Loss after iteration {}: {}".format(i, self.calculate_loss(model, reg_lambda)))
+
+        return model
+
+
+    def plot_decision_boundary(self, model, plot_name):
+        # Set min and max values and give it some padding
+        x_min, x_max = self.X[:, 0].min() - .5, self.X[:, 0].max() + .5
+        y_min, y_max = self.X[:, 1].min() - .5, self.X[:, 1].max() + .5
+        h = 0.01
+        # Generate a grid of points with distance h between them
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+
+        # Predict the function value for the whole grid
+        Z = self.predict(model, np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+
+        # Plot the contour and training examples
+        plt.contourf(xx, yy, Z, cmap=plt.cm.Spectral)
+        plt.scatter(self.X[:, 0], self.X[:, 1], c=self.y, cmap=plt.cm.Spectral)
+        plt.savefig(plot_name)
