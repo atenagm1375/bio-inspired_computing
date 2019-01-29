@@ -54,7 +54,7 @@ def predict(model, X):
     return np.argmax(a2, axis=1)
 
 
-def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, minibatch_size=minibatch_size):
+def build_model(X, y, nn_hdim, num_passes=20000, lr=epsilon, print_loss=False, minibatch_size=minibatch_size, reduce_lr=False):
     np.random.seed(0)
     W1 = np.random.randn(n_input_dim, nn_hdim) / np.sqrt(n_input_dim)
     b1 = np.zeros((1, nn_hdim))
@@ -90,6 +90,10 @@ def build_model(X, y, nn_hdim, num_passes=20000, print_loss=False, minibatch_siz
             b1 += -lr * db1
             W2 += -lr * dW2
             b2 += -lr * db2
+
+            # update learning rate
+            if reduce_lr:
+                lr *= 1 / (1 + decay * i)
 
             model = {"W1": W1, "b1": b1, "W2": W2, "b2":b2}
 
