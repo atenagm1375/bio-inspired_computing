@@ -67,38 +67,44 @@ class NeuralNetwork:
 
 
     def calculate_loss(self, model, reg_lambda):
-        W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
+        W1, b1, W2, b2, W3, b3 = model["W1"], model["b1"], model["W2"], model["b2"], model["W3"], model["b3"]
 
         # forward propagation to hidden layer
         z1, a1 = self.forward_propagation(self.X, W1, b1, self.activation_functions[0])
-        # foward propagation to output layer
-        z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+        # foward propagation to second hidden layer
+        z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[0])
+        # forward propagation to ouptput layer
+        z3, a3 = self.forward_propagation(a2, W3, b3, self.activation_functions[1])
 
-        logprobs = -np.log(a2[range(self.n_examples), self.y])
+        logprobs = -np.log(a3[range(self.n_examples), self.y])
         data_loss = np.sum(logprobs)
-        data_loss += reg_lambda / 2 * (np.sum(np.square(W1)) + np.sum(np.square(W2)))
+        data_loss += reg_lambda / 2 * (np.sum(np.square(W1)) + np.sum(np.square(W2)) + np.sum(np.square(W3)))
         return 1. / self.n_examples * data_loss
 
 
     def predict(self, model, x):
-        W1, b1, W2, b2 = model["W1"], model["b1"], model["W2"], model["b2"]
+        W1, b1, W2, b2, W3, b3 = model["W1"], model["b1"], model["W2"], model["b2"], model["W3"], model["b3"]
 
         # forward propagation to hidden layer
         z1, a1 = self.forward_propagation(x, W1, b1, self.activation_functions[0])
-        # foward propagation to output layer
-        z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+        # foward propagation to second hidden layer
+        z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[0])
+        # forward propagation to output layer
+        z3, a3 = self.forward_propagation(a2, W3, b3, self.activation_functions[1])
 
-        return np.argmax(a2, axis=1)
+        return np.argmax(a3, axis=1)
 
 
     def build_model(self, nn_hdim, num_passes=20000, lr=0.01, print_loss=False, \
                     minibatch_size=200, reduce_lr=False, decay=0.01, \
                     reg_lambda=0.01):
         np.random.seed(0)
-        W1 = np.random.randn(self.n_input_dim, nn_hdim) / np.sqrt(self.n_input_dim)
-        b1 = np.zeros((1, nn_hdim))
-        W2 = np.random.randn(nn_hdim, self.n_output_dim) / np.sqrt(nn_hdim)
-        b2 = np.zeros((1, self.n_output_dim))
+        W1 = np.random.randn(self.n_input_dim, nn_hdim[0]) / np.sqrt(self.n_input_dim)
+        b1 = np.zeros((1, nn_hdim[0]))
+        W2 = np.random.randn(nn_hdim[0], nn_hdim[1]) / np.sqrt(nn_hdim[0])
+        b2 = np.zeros((1, nn_hdim[1]))
+        W3 = np.random.randn(nn_hdim[1], self.n_output_dim) / np.sqrt(nn_hdim[1])
+        b3 = np.zeros((1, self.n_output_dim))
 
         model = {}
 
@@ -108,20 +114,23 @@ class NeuralNetwork:
                 y_train = self.y[j:j + minibatch_size]
                 # forward propagation
                 z1, a1 = self.forward_propagation(X_train, W1, b1, self.activation_functions[0])
-                z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[1])
+                z2, a2 = self.forward_propagation(a1, W2, b2, self.activation_functions[0])
+                z3, a3 = self.forward_propagation(a2, W3, b3, self.activation_functions[1])
 
                 # backpropagation
-                # TODO: put it in a separate function
-                # delta3 = (y_train - a2) * activation_grad(self.activation_functions[1], z2)
-                delta3 = a2
+                delta3 = a3
                 delta3[range(minibatch_size), y_train] -= 1
-                dW2 = (a1.T).dot(delta3)
-                db2 = np.sum(delta3, axis=0, keepdims=True)
-                delta2 = delta3.dot(W2.T) * self.activation_grad(self.activation_functions[0], z1)
-                dW1 = X_train.T.dot(delta2)
-                db1 = np.sum(delta2, axis=0)
+                dW3 = (a2.T).dot(delta3)
+                db3 = np.sum(delta3, axis=0, keepdims=True)
+                delta2 = delta3.dot(W3.T) * self.activation_grad(self.activation_functions[0], z2)
+                dW2 = (a1.T).dot(delta2)
+                db2 = np.sum(delta2, axis=0)
+                delta1 = delta2.dot(W2.T) * self.activation_grad(self.activation_functions[0], z1)
+                dW1 = X_train.T.dot(delta1)
+                db1 = np.sum(delta1, axis=0)
 
                 # add regularization terms
+                dW3 += reg_lambda * W3
                 dW2 += reg_lambda * W2
                 dW1 += reg_lambda * W1
 
@@ -130,12 +139,14 @@ class NeuralNetwork:
                 b1 += -lr * db1
                 W2 += -lr * dW2
                 b2 += -lr * db2
+                W3 += -lr * dW3
+                b3 += -lr * db3
 
                 # update learning rate
                 if reduce_lr:
                     lr *= 1 / (1 + decay * i)
 
-                model = {"W1": W1, "b1": b1, "W2": W2, "b2":b2}
+                model = {"W1": W1, "b1": b1, "W2": W2, "b2": b2, "W3": W3, "b3": b3}
 
             if print_loss and i % 1000 == 0:
                 print("Loss after iteration {}: {}".format(i, self.calculate_loss(model, reg_lambda)))
